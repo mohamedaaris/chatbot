@@ -1,0 +1,358 @@
+{% extends "layout.html" %}
+
+{% block title %}Train from URL - AgentX Platform{% endblock %}
+
+{% block extra_css %}
+    .url-form {
+      max-width: 600px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-secondary);
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 32px;
+    }
+
+    .url-preview {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .url-preview h4 {
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .url-preview p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .training-progress {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .success-message {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      color: var(--success);
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      color: var(--error);
+    }
+
+    .url-examples {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+    }
+
+    .url-examples h4 {
+      margin-bottom: 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .url-examples ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .url-examples li {
+      padding: 4px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .url-examples li:before {
+      content: "• ";
+      color: var(--accent);
+      font-weight: bold;
+    }
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Train from URL</h1>
+      <p class="page-subtitle">Extract knowledge from websites and online content</p>
+    </div>
+  </div>
+  
+  <div class="page-content">
+    <div id="messageContainer"></div>
+    
+    <form id="trainUrlForm" class="url-form">
+      <div class="form-group">
+        <label for="urlInput">Website URL</label>
+        <input type="url" id="urlInput" name="url" placeholder="https://example.com" required>
+        <div class="url-examples">
+          <h4>Example URLs:</h4>
+          <ul>
+            <li>https://en.wikipedia.org/wiki/Artificial_intelligence</li>
+            <li>https://docs.python.org/3/tutorial/</li>
+            <li>https://reactjs.org/docs/getting-started.html</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="agentSelect">Target Agent</label>
+        <select id="agentSelect" name="agentId" required>
+          <option value="">Select an agent to train...</option>
+        </select>
+      </div>
+      
+      <div class="form-actions">
+        <a href="/my-agents" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Train Agent</button>
+      </div>
+    </form>
+
+    <div class="url-preview" id="urlPreview">
+      <h4>Content Preview</h4>
+      <p id="previewText">Loading content...</p>
+    </div>
+
+    <div class="training-progress" id="trainingProgress">
+      <h4>Training Progress</h4>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p id="progressText">Training agent...</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAgents();
+      setupFormHandlers();
+      setupUrlPreview();
+    });
+
+    async function loadAgents() {
+      try {
+        const response = await fetch('/agents');
+        const data = await response.json();
+        
+        const select = document.getElementById('agentSelect');
+        select.innerHTML = '<option value="">Select an agent to train...</option>';
+        
+        if (data.success && data.agents) {
+          data.agents.forEach(agent => {
+            const option = document.createElement('option');
+            option.value = agent.id;
+            option.textContent = agent.name;
+            select.appendChild(option);
+          });
+        }
+
+        // Check for agent parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const agentId = urlParams.get('agent');
+        if (agentId) {
+          select.value = agentId;
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
+    }
+
+    function setupFormHandlers() {
+      const form = document.getElementById('trainUrlForm');
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const urlData = {
+          url: formData.get('url'),
+          agent_id: formData.get('agentId')
+        };
+
+        if (!urlData.url || !urlData.agent_id) {
+          showMessage('Please fill in all fields.', 'error');
+          return;
+        }
+
+        try {
+          showMessage('Training agent...', 'success');
+          showTrainingProgress();
+          
+          const response = await fetch('/train_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(urlData)
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            showMessage('Agent trained successfully! Redirecting to My Agents...', 'success');
+            setTimeout(() => {
+              window.location.href = '/my-agents';
+            }, 2000);
+          } else {
+            hideTrainingProgress();
+            showMessage('Error training agent: ' + result.error, 'error');
+          }
+        } catch (error) {
+          hideTrainingProgress();
+          console.error('Error training agent:', error);
+          showMessage('Error training agent: ' + error.message, 'error');
+        }
+      });
+    }
+
+    function setupUrlPreview() {
+      const urlInput = document.getElementById('urlInput');
+      const preview = document.getElementById('urlPreview');
+      const previewText = document.getElementById('previewText');
+      
+      let previewTimeout;
+      
+      urlInput.addEventListener('input', () => {
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(async () => {
+          const url = urlInput.value.trim();
+          if (url && isValidUrl(url)) {
+            try {
+              previewText.textContent = 'Loading content preview...';
+              preview.style.display = 'block';
+              
+              // Simulate content preview (in real implementation, you'd call an API)
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              previewText.textContent = `Content from ${url} will be extracted and used to train the selected agent. This may include text, headings, and other readable content from the webpage.`;
+            } catch (error) {
+              previewText.textContent = 'Unable to preview content. Please check the URL.';
+            }
+          } else {
+            preview.style.display = 'none';
+          }
+        }, 1000);
+      });
+    }
+
+    function isValidUrl(string) {
+      try {
+        new URL(string);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function showTrainingProgress() {
+      const progress = document.getElementById('trainingProgress');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      
+      progress.style.display = 'block';
+      
+      // Simulate progress
+      let progressValue = 0;
+      const interval = setInterval(() => {
+        progressValue += 10;
+        progressFill.style.width = `${progressValue}%`;
+        
+        if (progressValue >= 90) {
+          clearInterval(interval);
+          progressText.textContent = 'Finalizing training...';
+        }
+      }, 200);
+    }
+
+    function hideTrainingProgress() {
+      const progress = document.getElementById('trainingProgress');
+      progress.style.display = 'none';
+    }
+
+    function showMessage(message, type) {
+      const container = document.getElementById('messageContainer');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `${type}-message`;
+      messageDiv.textContent = message;
+      
+      // Clear existing messages
+      container.innerHTML = '';
+      container.appendChild(messageDiv);
+      
+      // Auto-hide success messages
+      if (type === 'success' && !message.includes('Redirecting')) {
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 5000);
+      }
+    }
+{% endblock %}

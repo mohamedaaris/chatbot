@@ -1,0 +1,675 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title" id="agentName">Agent Chat</h1>
+        <p class="page-subtitle" id="agentDescription">Chat with your AI agent</p>
+        <button class="btn btn-secondary" onclick="goBack()">
+            ← Back to My Agents
+        </button>
+    </div>
+    
+    <div class="page-content">
+        <div class="agent-chat-container">
+            <!-- Agent Info Card -->
+            <div class="agent-info-card" id="agentInfoCard">
+                <div class="agent-avatar">🤖</div>
+                <div class="agent-details">
+                    <h3 id="agentNameCard">Agent Name</h3>
+                    <p id="agentGreeting">Hello! How can I help you today?</p>
+                    <div class="agent-status">
+                        <span class="status-badge" id="agentStatus">Ready</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message agent-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="message-text" id="agentGreetingMessage">Hello! I'm your AI assistant. How can I help you today?</div>
+                        <div class="message-time" id="messageTime"></div>
+                    </div>
+                </div>
+                <!-- Typing indicator -->
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <div class="message agent-message">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <input type="text" id="chatInput" placeholder="Ask your agent anything..." class="chat-input">
+                    <button id="voiceButton" class="btn voice-btn" title="Voice typing">
+                        <span class="voice-icon">🎤</span>
+                    </button>
+                    <button id="sendButton" class="btn btn-primary send-btn">
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.agent-chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.agent-info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.agent-avatar {
+    font-size: 48px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    border-radius: 50%;
+    color: white;
+}
+
+.agent-details h3 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.agent-details p {
+    margin: 0 0 12px 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.agent-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-badge {
+    background: var(--success-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Right-align user's message with avatar on the right */
+.user-message {
+    flex-direction: row-reverse;
+}
+
+.user-message .message-content { align-items: flex-end; }
+.agent-message .message-content { align-items: flex-start; }
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.user-message .message-avatar {
+    background: var(--primary-color);
+    color: white;
+}
+
+.agent-message .message-avatar {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.message-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-text {
+    padding: 16px 20px;
+    border-radius: 18px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.user-message .message-text {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    margin-left: auto;
+    max-width: 70%;
+    border-bottom-right-radius: 6px;
+}
+
+.agent-message .message-text {
+    background: #ffffff;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    max-width: 85%;
+    border-bottom-left-radius: 6px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.user-message .message-time {
+    text-align: right;
+}
+
+/* Emotion tags */
+.emotion-tag {
+    display: inline-block;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 4px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Source chips */
+.sources {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.source-chip {
+    display: inline-block;
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    cursor: help;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-input-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+    border-color: var(--primary-color);
+}
+
+.send-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.send-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Voice button */
+.voice-btn {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s, border-color 0.2s;
+}
+
+.voice-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.voice-btn.recording {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.voice-icon {
+    font-size: 18px;
+}
+
+/* Typing indicator */
+.typing-indicator {
+    opacity: 0;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    max-width: 85%;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .agent-chat-container {
+        height: calc(100vh - 150px);
+    }
+    
+    .agent-info-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-message .message-text {
+        max-width: 90%;
+    }
+    
+    .agent-message .message-text {
+        max-width: 95%;
+    }
+}
+</style>
+
+<script>
+let currentAgentId = null;
+
+// Get agent ID from URL parameters
+function getAgentIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('agent');
+}
+
+// Load agent information
+async function loadAgentInfo() {
+    const agentId = getAgentIdFromUrl();
+    if (!agentId) {
+        showError('No agent ID provided');
+        return;
+    }
+    
+    currentAgentId = agentId;
+    
+    try {
+        const response = await fetch(`/agents/${agentId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const agent = data.agent;
+            document.getElementById('agentName').textContent = `Chat with ${agent.name}`;
+            document.getElementById('agentDescription').textContent = agent.description || 'Chat with your AI agent';
+            document.getElementById('agentNameCard').textContent = agent.name;
+            document.getElementById('agentGreeting').textContent = agent.greeting;
+            document.getElementById('agentGreetingMessage').textContent = agent.greeting;
+            document.getElementById('agentStatus').textContent = agent.knowledge_base_status === 'trained' ? 'Trained' : 'Empty';
+        } else {
+            showError('Failed to load agent information');
+        }
+    } catch (error) {
+        console.error('Error loading agent:', error);
+        showError('Failed to load agent information');
+    }
+}
+
+// Send message to agent
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message || !currentAgentId) return;
+    
+    // Add user message to chat
+    addMessageToChat(message, 'user');
+    input.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    // Disable send button
+    const sendBtn = document.getElementById('sendButton');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span>Sending...</span>';
+    
+    try {
+        const response = await fetch(`/chat-agent/${currentAgentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ question: message })
+        });
+        
+        const data = await response.json();
+        
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        if (data.success) {
+            addMessageToChat(data.answer, 'agent', false, data.sources || [], data.emotion || {});
+        } else {
+            addMessageToChat(`Error: ${data.error}`, 'agent', true);
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        hideTypingIndicator();
+        addMessageToChat('Sorry, there was an error processing your message.', 'agent', true);
+    } finally {
+        // Re-enable send button
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<span>Send</span>';
+    }
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    const messagesContainer = document.getElementById('chatMessages');
+    // Always move indicator to the bottom before showing
+    if (typingIndicator.parentElement !== messagesContainer) {
+        messagesContainer.appendChild(typingIndicator);
+    } else {
+        messagesContainer.appendChild(typingIndicator); // re-append to bottom
+    }
+    typingIndicator.style.display = 'block';
+    typingIndicator.style.opacity = '1';
+    scrollToBottom();
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    typingIndicator.style.opacity = '0';
+    setTimeout(() => {
+        typingIndicator.style.display = 'none';
+    }, 300);
+}
+
+// Scroll to bottom of chat
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Add message to chat display
+function addMessageToChat(text, sender, isError = false, sources = [], emotion = {}) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const avatar = sender === 'user' ? 'U' : '🤖';
+    const time = new Date().toLocaleTimeString();
+    
+    // Emotion tag for user messages
+    let emotionTag = '';
+    if (sender === 'user' && emotion && emotion.emotion && emotion.emotion !== 'neutral' && emotion.confidence > 0.3) {
+        const emotionEmojis = {
+            'happy': '😊',
+            'sad': '😢',
+            'angry': '😠',
+            'anxious': '😰',
+            'confused': '🤔',
+            'grateful': '🙏'
+        };
+        const emoji = emotionEmojis[emotion.emotion] || '😐';
+        emotionTag = `<div class="emotion-tag" title="Detected emotion: ${emotion.emotion} (${Math.round(emotion.confidence * 100)}% confidence)">${emoji} ${emotion.emotion}</div>`;
+    }
+    
+    // Sources for agent messages
+    let sourcesHtml = '';
+    if (sender === 'agent' && Array.isArray(sources) && sources.length) {
+        const chips = sources.map(s => {
+            const src = (s && (s.source || s.url || s.path || JSON.stringify(s)))
+                .toString().substring(0, 60);
+            return `<span class="source-chip" title="${escapeHtml(JSON.stringify(s))}">${escapeHtml(src)}</span>`;
+        }).join('');
+        sourcesHtml = `<div class="sources">${chips}</div>`;
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+            <div class="message-text" style="${isError ? 'background: #fee2e2; color: #dc2626;' : ''}">${text}</div>
+            ${emotionTag}
+            ${sourcesHtml}
+            <div class="message-time">${time}</div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    
+    // Smooth scroll to bottom
+    setTimeout(() => {
+        scrollToBottom();
+    }, 100);
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Show error message
+function showError(message) {
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.innerHTML = `
+        <div class="message agent-message">
+            <div class="message-avatar">⚠️</div>
+            <div class="message-content">
+                <div class="message-text" style="background: #fee2e2; color: #dc2626;">${message}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Go back to My Agents page
+function goBack() {
+    window.location.href = '/my-agents';
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadAgentInfo();
+    
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const voiceButton = document.getElementById('voiceButton');
+    
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    sendButton.addEventListener('click', sendMessage);
+
+    // Initialize voice typing
+    initVoiceTyping(voiceButton, chatInput);
+});
+
+// Voice typing using Web Speech API
+function initVoiceTyping(buttonEl, inputEl) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        // Hide button if not supported
+        if (buttonEl) buttonEl.style.display = 'none';
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    let isRecording = false;
+    let finalTranscript = '';
+
+    function start() {
+        finalTranscript = '';
+        recognition.start();
+        isRecording = true;
+        buttonEl.classList.add('recording');
+        buttonEl.title = 'Listening… click to stop';
+    }
+
+    function stop() {
+        recognition.stop();
+        isRecording = false;
+        buttonEl.classList.remove('recording');
+        buttonEl.title = 'Voice typing';
+    }
+
+    buttonEl.addEventListener('click', function() {
+        if (isRecording) {
+            stop();
+        } else {
+            start();
+        }
+    });
+
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+                finalTranscript += result[0].transcript;
+            } else {
+                interimTranscript += result[0].transcript;
+            }
+        }
+        inputEl.value = (finalTranscript + ' ' + interimTranscript).trim();
+    };
+
+    recognition.onerror = () => {
+        stop();
+    };
+
+    recognition.onend = () => {
+        if (isRecording) {
+            stop();
+        }
+    };
+}
+</script>
+{% endblock %}

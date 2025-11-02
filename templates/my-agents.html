@@ -1,0 +1,320 @@
+{% extends "layout.html" %}
+
+{% block title %}My Agents - AgentX Platform{% endblock %}
+
+{% block extra_css %}
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .agent-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+    }
+
+    .agent-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .agent-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .agent-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .agent-status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .agent-status.trained {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .agent-status.empty {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .agent-description {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .agent-greeting {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .agent-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .agent-actions .btn {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-header h1 {
+      margin: 0;
+    }
+
+    .page-header .btn {
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+      }
+      
+      .agents-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .agent-actions {
+        flex-direction: column;
+      }
+    }
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My Agents</h1>
+      <p class="page-subtitle">Manage and deploy your AI agents</p>
+    </div>
+    <a href="/create-agent" class="btn btn-primary">
+      <span>+</span> Create New Agent
+    </a>
+  </div>
+  
+  <div class="page-content">
+    <div id="agentsContainer">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading agents...</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAgents();
+    });
+
+    async function loadAgents() {
+      const container = document.getElementById('agentsContainer');
+      
+      try {
+        const response = await fetch('/agents');
+        const data = await response.json();
+        
+        if (data.success && data.agents && data.agents.length > 0) {
+          container.innerHTML = `
+            <div class="agents-grid">
+              ${data.agents.map(agent => `
+                <div class="agent-card">
+                  <div class="agent-card-header">
+                    <h3 class="agent-name">${agent.name}</h3>
+                    <span class="agent-status ${agent.knowledge_base_status}">${agent.knowledge_base_status}</span>
+                  </div>
+                  <div class="agent-description">${agent.description || 'No description provided'}</div>
+                  <div class="agent-greeting">"${agent.greeting}"</div>
+                  <div class="agent-actions">
+                    <button class="btn btn-primary" onclick="chatAgent('${agent.id}')">Chat</button>
+                    <button class="btn btn-secondary" onclick="editAgent('${agent.id}')">Edit</button>
+                    <button class="btn btn-secondary" onclick="trainAgent('${agent.id}')">Train</button>
+                    <button class="btn btn-secondary" onclick="generateEmbed('${agent.id}')">Embed</button>
+                    <button class="btn btn-danger" onclick="deleteAgent('${agent.id}')">Delete</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🤖</div>
+              <h3>No agents created yet</h3>
+              <p>Create your first AI agent to get started</p>
+              <a href="/create-agent" class="btn btn-primary">Create Agent</a>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h3>Error loading agents</h3>
+            <p>Please try again later</p>
+            <button class="btn btn-primary" onclick="loadAgents()">Retry</button>
+          </div>
+        `;
+      }
+    }
+
+    function editAgent(agentId) {
+      // Get agent data and show edit form
+      const agent = agents.find(a => a.id === agentId);
+      if (!agent) {
+        alert('Agent not found');
+        return;
+      }
+      
+      const newName = prompt('Enter new name:', agent.name);
+      if (newName === null) return; // User cancelled
+      
+      const newGreeting = prompt('Enter new greeting:', agent.greeting);
+      if (newGreeting === null) return; // User cancelled
+      
+      const newDescription = prompt('Enter new description:', agent.description);
+      if (newDescription === null) return; // User cancelled
+      
+      // Update agent
+      updateAgent(agentId, newName, newGreeting, newDescription);
+    }
+    
+    async function updateAgent(agentId, name, greeting, description) {
+      try {
+        const response = await fetch(`/agents/${agentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name,
+            greeting: greeting,
+            description: description
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Agent updated successfully!');
+          loadAgents(); // Reload the agents list
+        } else {
+          alert('Error updating agent: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error updating agent:', error);
+        alert('Error updating agent: ' + error.message);
+      }
+    }
+    
+    function chatAgent(agentId) {
+      window.location.href = `/agent-chat?agent=${agentId}`;
+    }
+
+    function trainAgent(agentId) {
+      window.location.href = `/train-from-url?agent=${agentId}`;
+    }
+
+    function generateEmbed(agentId) {
+      window.location.href = `/generate-embed-code?agent=${agentId}`;
+    }
+
+    async function deleteAgent(agentId) {
+      if (confirm('Are you sure you want to delete this agent?')) {
+        try {
+          const response = await fetch(`/agents/${agentId}`, {
+            method: 'DELETE'
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            alert('Agent deleted successfully!');
+            loadAgents(); // Reload the agents list
+          } else {
+            alert('Error deleting agent: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error deleting agent:', error);
+          alert('Error deleting agent: ' + error.message);
+        }
+      }
+    }
+{% endblock %}

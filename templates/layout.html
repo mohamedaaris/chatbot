@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AgentX - AI Agent Platform{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #0f0f23;
+      --bg-secondary: #1a1a2e;
+      --bg-tertiary: #16213e;
+      --card: #1e1e3f;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #374151;
+      --border-light: #4b5563;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --shadow: 0 20px 50px rgba(0,0,0,0.3);
+      --shadow-lg: 0 25px 50px rgba(0,0,0,0.5);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --sidebar-width: 320px;
+      --header-height: 64px;
+    }
+    
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --card: #ffffff;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-light: #cbd5e1;
+      --shadow: 0 20px 50px rgba(0,0,0,0.1);
+      --shadow-lg: 0 25px 50px rgba(0,0,0,0.15);
+    }
+    
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    .app {
+      display: flex;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+    }
+    
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: rgba(30, 30, 63, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .theme-toggle, .sidebar-toggle {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .theme-toggle:hover, .sidebar-toggle:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: var(--header-height);
+      bottom: 0;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+    
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .sidebar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .sidebar-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .sidebar-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-section {
+      margin-bottom: 32px;
+    }
+    
+    .sidebar-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin: 4px 0;
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .sidebar-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text);
+    }
+    
+    .sidebar-item.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .sidebar-item-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      margin-top: var(--header-height);
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s ease;
+    }
+    
+    .main-content.full-width {
+      margin-left: 0;
+    }
+    
+    /* Page Components */
+    .page-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+      flex: 1;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    .page-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    
+    /* Forms */
+    .agent-form, .url-form, .knowledge-form, .embed-form {
+      max-width: 600px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-secondary);
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 32px;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+    
+    /* Status Bar */
+    .status-bar {
+      padding: 12px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .page-container {
+        padding: 16px;
+      }
+      
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+    }
+    
+    {% block extra_css %}{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <a href="/" class="logo">
+          <div class="logo-icon">🤖</div>
+          <span>AgentX</span>
+        </a>
+      </div>
+      <div class="header-right">
+        <button class="theme-toggle" id="themeToggle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">AgentX Platform</div>
+        <div class="sidebar-subtitle">Create, manage, and deploy AI agents</div>
+      </div>
+      <div class="sidebar-content">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Quick Actions</div>
+          <a href="/chat" class="sidebar-item {% if request.endpoint == 'chat' %}active{% endif %}">
+            <div class="sidebar-item-icon">💬</div>
+            <span>Chat with AgentX</span>
+          </a>
+          <a href="/create-agent" class="sidebar-item {% if request.endpoint == 'create_agent' %}active{% endif %}">
+            <div class="sidebar-item-icon">➕</div>
+            <span>Create New Agent</span>
+          </a>
+          <a href="/my-agents" class="sidebar-item {% if request.endpoint == 'my_agents' %}active{% endif %}">
+            <div class="sidebar-item-icon">📋</div>
+            <span>My Agents</span>
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Training</div>
+          <a href="/upload-document" class="sidebar-item {% if request.endpoint == 'upload_document' %}active{% endif %}">
+            <div class="sidebar-item-icon">📄</div>
+            <span>Upload Document</span>
+          </a>
+          <a href="/train-from-url" class="sidebar-item {% if request.endpoint == 'train_from_url' %}active{% endif %}">
+            <div class="sidebar-item-icon">🌐</div>
+            <span>Train from URL</span>
+          </a>
+          <a href="/add-knowledge" class="sidebar-item {% if request.endpoint == 'add_knowledge' %}active{% endif %}">
+            <div class="sidebar-item-icon">📝</div>
+            <span>Add Knowledge</span>
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Deployment</div>
+          <a href="/generate-embed-code" class="sidebar-item {% if request.endpoint == 'generate_embed_code' %}active{% endif %}">
+            <div class="sidebar-item-icon">🔗</div>
+            <span>Generate Embed Code</span>
+          </a>
+          <a href="/settings" class="sidebar-item {% if request.endpoint == 'settings' %}active{% endif %}">
+            <div class="sidebar-item-icon">⚙️</div>
+            <span>Settings</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-indicator"></div>
+        <span>AgentX Online</span>
+      </div>
+      <div class="status-item">
+        <span>System Status: {% if system_status %}{{ system_status.status }}{% else %}Loading...{% endif %}</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global state
+    let isTyping = false;
+
+    // DOM elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      // Sidebar toggle
+      sidebarToggle.addEventListener('click', toggleSidebar);
+      
+      // Theme toggle
+      themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('collapsed');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.dataset.theme;
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.dataset.theme = newTheme;
+      localStorage.setItem('theme', newTheme);
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.dataset.theme = savedTheme;
+    }
+
+    {% block extra_js %}{% endblock %}
+  </script>
+</body>
+</html>

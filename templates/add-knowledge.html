@@ -1,0 +1,336 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Knowledge - AgentX Platform{% endblock %}
+
+{% block extra_css %}
+    .knowledge-form {
+      max-width: 600px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-secondary);
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 32px;
+    }
+
+    .knowledge-examples {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+    }
+
+    .knowledge-examples h4 {
+      margin-bottom: 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .knowledge-examples ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .knowledge-examples li {
+      padding: 4px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .knowledge-examples li:before {
+      content: "• ";
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .character-count {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .character-count.warning {
+      color: var(--warning);
+    }
+
+    .character-count.error {
+      color: var(--error);
+    }
+
+    .success-message {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      color: var(--success);
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      color: var(--error);
+    }
+
+    .knowledge-tips {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--accent);
+    }
+
+    .knowledge-tips h4 {
+      margin-bottom: 12px;
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .knowledge-tips ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .knowledge-tips li {
+      padding: 6px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .knowledge-tips li:before {
+      content: "💡 ";
+      margin-right: 8px;
+    }
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Add Knowledge</h1>
+      <p class="page-subtitle">Manually add structured data to your agent's knowledge base</p>
+    </div>
+  </div>
+  
+  <div class="page-content">
+    <div id="messageContainer"></div>
+    
+    <form id="addKnowledgeForm" class="knowledge-form">
+      <div class="form-group">
+        <label for="knowledgeAgentSelect">Target Agent</label>
+        <select id="knowledgeAgentSelect" name="agentId" required>
+          <option value="">Select an agent...</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="knowledgeText">Knowledge Content</label>
+        <textarea 
+          id="knowledgeText" 
+          name="content" 
+          placeholder="Enter the knowledge you want to add to your agent..." 
+          rows="8" 
+          required
+          maxlength="5000"
+        ></textarea>
+        <div class="character-count" id="characterCount">0 / 5000 characters</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="knowledgeSource">Source (optional)</label>
+        <input 
+          type="text" 
+          id="knowledgeSource" 
+          name="source" 
+          placeholder="e.g., Manual Entry, FAQ Document, etc."
+        >
+        <div class="knowledge-examples">
+          <h4>Example Sources:</h4>
+          <ul>
+            <li>Company FAQ</li>
+            <li>Product Documentation</li>
+            <li>Customer Support Guide</li>
+            <li>Training Materials</li>
+            <li>Manual Entry</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <a href="/my-agents" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Add Knowledge</button>
+      </div>
+    </form>
+
+    <div class="knowledge-tips">
+      <h4>Tips for Effective Knowledge Addition</h4>
+      <ul>
+        <li>Be specific and detailed in your descriptions</li>
+        <li>Use clear, concise language that's easy to understand</li>
+        <li>Include relevant examples and context</li>
+        <li>Organize information in logical sections</li>
+        <li>Use consistent terminology throughout</li>
+        <li>Include step-by-step instructions when applicable</li>
+        <li>Add troubleshooting information for common issues</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAgents();
+      setupFormHandlers();
+      setupCharacterCount();
+    });
+
+    async function loadAgents() {
+      try {
+        const response = await fetch('/agents');
+        const data = await response.json();
+        
+        const select = document.getElementById('knowledgeAgentSelect');
+        select.innerHTML = '<option value="">Select an agent...</option>';
+        
+        if (data.success && data.agents) {
+          data.agents.forEach(agent => {
+            const option = document.createElement('option');
+            option.value = agent.id;
+            option.textContent = agent.name;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading agents:', error);
+      }
+    }
+
+    function setupFormHandlers() {
+      const form = document.getElementById('addKnowledgeForm');
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const knowledgeData = {
+          agent_id: formData.get('agentId'),
+          content: formData.get('content'),
+          source: formData.get('source') || 'Manual Entry'
+        };
+
+        if (!knowledgeData.agent_id || !knowledgeData.content) {
+          showMessage('Please fill in all required fields.', 'error');
+          return;
+        }
+
+        if (knowledgeData.content.length < 10) {
+          showMessage('Knowledge content must be at least 10 characters long.', 'error');
+          return;
+        }
+
+        try {
+          showMessage('Adding knowledge to agent...', 'success');
+          
+          const response = await fetch('/add_knowledge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(knowledgeData)
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            showMessage('Knowledge added successfully!', 'success');
+            form.reset();
+            updateCharacterCount();
+          } else {
+            showMessage('Error adding knowledge: ' + result.error, 'error');
+          }
+        } catch (error) {
+          console.error('Error adding knowledge:', error);
+          showMessage('Error adding knowledge: ' + error.message, 'error');
+        }
+      });
+    }
+
+    function setupCharacterCount() {
+      const textarea = document.getElementById('knowledgeText');
+      const counter = document.getElementById('characterCount');
+      
+      textarea.addEventListener('input', updateCharacterCount);
+      
+      function updateCharacterCount() {
+        const length = textarea.value.length;
+        const maxLength = 5000;
+        
+        counter.textContent = `${length} / ${maxLength} characters`;
+        
+        if (length > maxLength * 0.9) {
+          counter.className = 'character-count error';
+        } else if (length > maxLength * 0.8) {
+          counter.className = 'character-count warning';
+        } else {
+          counter.className = 'character-count';
+        }
+      }
+    }
+
+    function showMessage(message, type) {
+      const container = document.getElementById('messageContainer');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `${type}-message`;
+      messageDiv.textContent = message;
+      
+      // Clear existing messages
+      container.innerHTML = '';
+      container.appendChild(messageDiv);
+      
+      // Auto-hide success messages
+      if (type === 'success') {
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 5000);
+      }
+    }
+{% endblock %}

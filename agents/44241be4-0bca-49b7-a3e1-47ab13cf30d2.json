@@ -1,0 +1,10 @@
+{
+  "id": "44241be4-0bca-49b7-a3e1-47ab13cf30d2",
+  "name": "Dude",
+  "greeting": "Hey there! iam Dude, how can i assist you!",
+  "description": "related to my project",
+  "created_at": "2025-10-18T22:37:33.695898",
+  "updated_at": "2025-11-02T11:56:17.437391",
+  "knowledge_base_status": "trained",
+  "vector_store_path": "C:\\Users\\ASUS\\Documents\\chatbot\\vector_store\\agent_44241be4-0bca-49b7-a3e1-47ab13cf30d2"
+}
